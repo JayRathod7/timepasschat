@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "529465936837",
+    "project_id": "timepasschat-b9223",
+    "storage_bucket": "timepasschat-b9223.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:529465936837:android:d693e58b0a4b14589919ac",
+        "android_client_info": {
+          "package_name": "com.timepasschat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "529465936837-lknpm9na6d3q6j3dv2amg9oik157oji1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.timepasschat",
+            "certificate_hash": "6923323882ac26d65acf1c1729f086c61bd5590f"
+          }
+        },
+        {
+          "client_id": "529465936837-f3vn3bbo9i388pb9oh0vtou5kf38dcd6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCci-C5L14pbd1VptwaZPTvbbdcoGriNiU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "529465936837-f3vn3bbo9i388pb9oh0vtou5kf38dcd6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "529465936837-00s5t42tmv63anadvbi2p5q3p555rnlc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.timepasschat"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
