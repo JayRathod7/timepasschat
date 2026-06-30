@@ -50,6 +50,7 @@ dependencies:
   gap: ^3.0.1
   cached_network_image: ^3.4.1
   intl: ^0.20.2
+  logger: ^2.7.0
 
 
 dev_dependencies:

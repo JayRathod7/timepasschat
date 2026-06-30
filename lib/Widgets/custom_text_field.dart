@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../Constants/app_colors.dart';
+
 class AppTextField extends StatelessWidget {
   final TextEditingController controller;
   final String labelText;
@@ -51,6 +53,20 @@ class AppTextField extends StatelessWidget {
         labelText: labelText,
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
+        filled: true,
+        fillColor: const Color(0xFFF8FAFC),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
+        ),
       ),
     );
   }
