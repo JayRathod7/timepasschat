@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../Routes/app_routes.dart';
+import '../Services/auth_service.dart';
+import '../Utils/app_logger.dart';
 
 class LoginController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -12,7 +14,6 @@ class LoginController extends GetxController {
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-
   final formKey = GlobalKey<FormState>();
 
   final RxBool isLoading = false.obs;
@@ -22,16 +23,42 @@ class LoginController extends GetxController {
   bool _googleInitialized = false;
 
   @override
+  void onInit() {
+    super.onInit();
+    _initGoogleSignIn();
+    AppLogger.i('LoginController initialized');
+  }
+
+  @override
   void onClose() {
     emailController.dispose();
     passwordController.dispose();
+    AppLogger.i('LoginController disposed');
     super.onClose();
   }
 
   Future<void> _initGoogleSignIn() async {
     if (_googleInitialized) return;
-    await _googleSignIn.initialize();
-    _googleInitialized = true;
+
+    try {
+      await _googleSignIn.initialize(
+        serverClientId:
+        '529465936837-f3vn3bbo9i388pb9oh0vtou5kf38dcd6.apps.googleusercontent.com',
+      );
+      _googleInitialized = true;
+      AppLogger.i('Google Sign-In initialized');
+    } catch (e, stackTrace) {
+      AppLogger.e(
+        'Google Sign-In initialization failed',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      Get.snackbar(
+        'Error',
+        'Failed to initialize Google Sign-In',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
   }
 
   Future<void> loginWithEmailPassword() async {
@@ -46,10 +73,22 @@ class LoginController extends GetxController {
         password: passwordController.text.trim(),
       );
 
-      if (credential.user != null) {
+      final user = credential.user;
+
+      if (user != null) {
+        await UserService.saveUser(user: user);
+        AppLogger.i('Email login success | uid: ${user.uid}');
         Get.offAllNamed(AppRoutes.home);
+      } else {
+        AppLogger.w('Email login success but user is null');
       }
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (e, stackTrace) {
+      AppLogger.e(
+        'Email login failed | code: ${e.code}',
+        error: e,
+        stackTrace: stackTrace,
+      );
+
       String message = 'Login failed. Please try again.';
 
       if (e.code == 'user-not-found') {
@@ -67,7 +106,12 @@ class LoginController extends GetxController {
         message,
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.e(
+        'Unexpected error during email login',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'Login Failed',
         e.toString(),
@@ -110,16 +154,36 @@ class LoginController extends GetxController {
         credential,
       );
 
-      if (userCredential.user != null) {
+      final user = userCredential.user;
+
+      if (user != null) {
+        await UserService.saveUser(
+          user: user,
+          name: user.displayName,
+          profileImage: user.photoURL,
+        );
+        AppLogger.i('Google login success | uid: ${user.uid}');
         Get.offAllNamed(AppRoutes.home);
+      } else {
+        AppLogger.w('Google login success but user is null');
       }
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (e, stackTrace) {
+      AppLogger.e(
+        'Google login failed | code: ${e.code}',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'Google Sign In Failed',
         e.message ?? 'Something went wrong.',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.e(
+        'Unexpected error during Google login',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'Google Sign In Failed',
         e.toString(),

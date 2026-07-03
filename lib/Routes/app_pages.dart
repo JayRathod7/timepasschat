@@ -1,6 +1,7 @@
 // lib/Routes/app_pages.dart
 import 'package:get/get.dart';
 
+import '../Bindings/home_binding.dart';
 import '../Bindings/login_binding.dart';
 import '../Bindings/register_binding.dart';
 import '../Bindings/splash_binding.dart';
@@ -27,6 +28,12 @@ class AppPages {
       page: () => const RegisterScreen(),
       binding: RegisterBinding(),
     ),
-    GetPage(name: AppRoutes.home, page: () => const HomeScreen()),
+
+    GetPage(
+      name: AppRoutes.home,
+      page: () => const HomeScreen(),
+      binding: HomeBinding(),
+
+    ),
   ];
 }
