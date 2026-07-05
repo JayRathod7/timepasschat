@@ -1,10 +1,12 @@
 // lib/Routes/app_pages.dart
 import 'package:get/get.dart';
 
+import '../Bindings/chat_binding.dart';
 import '../Bindings/home_binding.dart';
 import '../Bindings/login_binding.dart';
 import '../Bindings/register_binding.dart';
 import '../Bindings/splash_binding.dart';
+import '../Screens/chat_screen.dart';
 import '../Screens/home_screen.dart';
 import '../Screens/login_screen.dart';
 import '../Screens/register_screen.dart';
@@ -34,6 +36,12 @@ class AppPages {
       page: () => const HomeScreen(),
       binding: HomeBinding(),
 
+    ),
+
+    GetPage(
+      name: AppRoutes.chat,
+      page: () => const ChatScreen(),
+      binding: ChatBinding(),
     ),
   ];
 }

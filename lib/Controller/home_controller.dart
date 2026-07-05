@@ -151,15 +151,16 @@ class HomeController extends GetxController {
         });
       }
 
-      // Get.toNamed(
-      //   AppRoutes.chat,
-      //   arguments: {
-      //     'chatId': chatId,
-      //     'otherUserId': otherUserId,
-      //     'otherUserName': otherUser['name'] ?? 'User',
-      //     'otherUserImage': otherUser['profileImage'] ?? '',
-      //   },
-      // );
+      // ✅ Navigate to ChatScreen
+      Get.toNamed(
+        AppRoutes.chat,
+        arguments: {
+          'chatId': chatId,
+          'otherUserId': otherUserId,
+          'otherUserName': otherUser['name'] ?? 'User',
+          'otherUserImage': otherUser['profileImage'] ?? '',
+        },
+      );
     } catch (e, stackTrace) {
       AppLogger.e(
         'Failed to open chat',
