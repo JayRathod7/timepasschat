@@ -7,6 +7,7 @@ import '../Constants/app_colors.dart';
 class AppTextField extends StatelessWidget {
   final TextEditingController controller;
   final String labelText;
+  final String? hintText;
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
   final bool obscureText;
@@ -23,6 +24,7 @@ class AppTextField extends StatelessWidget {
     super.key,
     required this.controller,
     required this.labelText,
+    this.hintText,
     this.keyboardType,
     this.textInputAction,
     this.obscureText = false,
@@ -35,6 +37,16 @@ class AppTextField extends StatelessWidget {
     this.inputFormatters,
     this.maxLines = 1,
   });
+
+  OutlineInputBorder _border(Color color) {
+    return OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(
+        color: color,
+        width: 1.1,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,24 +61,43 @@ class AppTextField extends StatelessWidget {
       onFieldSubmitted: onFieldSubmitted,
       inputFormatters: inputFormatters,
       maxLines: maxLines,
+      style: const TextStyle(
+        fontSize: 14.5,
+        fontWeight: FontWeight.w500,
+        color: AppColors.textPrimary,
+      ),
       decoration: InputDecoration(
         labelText: labelText,
+        hintText: hintText,
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: const Color(0xFFF8FAFC),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: AppColors.border),
+        fillColor: readOnly
+            ? AppColors.background.withOpacity(0.7)
+            : const Color(0xFFF8FAFC),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: AppColors.border),
+        labelStyle: const TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
+        hintStyle: TextStyle(
+          color: AppColors.textSecondary.withOpacity(0.65),
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
         ),
+        errorStyle: const TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w500,
+        ),
+        border: _border(AppColors.border),
+        enabledBorder: _border(AppColors.border),
+        focusedBorder: _border(AppColors.primary),
+        errorBorder: _border(AppColors.error),
+        focusedErrorBorder: _border(AppColors.error),
       ),
     );
   }

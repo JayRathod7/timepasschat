@@ -1,4 +1,6 @@
 // lib/Controller/chat_controller.dart
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +24,7 @@ class ChatController extends GetxController {
   final RxList<QueryDocumentSnapshot<Map<String, dynamic>>> messages =
       <QueryDocumentSnapshot<Map<String, dynamic>>>[].obs;
 
-  Stream<QuerySnapshot<Map<String, dynamic>>>? _messagesStream;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _messagesSubscription;
 
   @override
   void onInit() {
@@ -40,6 +42,7 @@ class ChatController extends GetxController {
       Get.snackbar('Error', 'User not logged in');
       return;
     }
+
     currentUserId = user.uid;
 
     _listenToMessages();
@@ -47,24 +50,67 @@ class ChatController extends GetxController {
   }
 
   void _listenToMessages() {
-    _messagesStream = _firestore
+    _messagesSubscription?.cancel();
+
+    _messagesSubscription = _firestore
         .collection('chats')
         .doc(chatId)
         .collection('messages')
         .orderBy('createdAt', descending: true)
-        .snapshots();
-
-    _messagesStream!.listen((snapshot) {
+        .snapshots()
+        .listen((snapshot) {
       messages.assignAll(snapshot.docs);
       _markMessagesAsSeen();
     });
   }
 
+  Future<Map<String, dynamic>> _getCurrentUserData() async {
+    final doc = await _firestore.collection('users').doc(currentUserId).get();
+    return doc.data() ?? {};
+  }
+
+  Future<void> _ensureChatDocument() async {
+    final chatRef = _firestore.collection('chats').doc(chatId);
+    final chatDoc = await chatRef.get();
+
+    if (chatDoc.exists) return;
+
+    final currentUserData = await _getCurrentUserData();
+
+    await chatRef.set({
+      'chatId': chatId,
+      'members': [currentUserId, otherUserId],
+      'memberDetails': {
+        currentUserId: {
+          'name': currentUserData['name'] ?? '',
+          'profileImage': currentUserData['profileImage'] ?? '',
+        },
+        otherUserId: {
+          'name': otherUserName,
+          'profileImage': otherUserImage,
+        },
+      },
+      'lastMessage': '',
+      'lastMessageAt': FieldValue.serverTimestamp(),
+      'lastMessageSenderId': '',
+      'unreadCount': {
+        currentUserId: 0,
+        otherUserId: 0,
+      },
+      'lastSeenAt': {
+        currentUserId: FieldValue.serverTimestamp(),
+        otherUserId: null,
+      },
+      'createdAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
   Future<void> _markMessagesAsSeen() async {
     try {
+      if (chatId.isEmpty || currentUserId.isEmpty) return;
+
       final chatRef = _firestore.collection('chats').doc(chatId);
 
-      // Just update lastSeenAt & reset unreadCount for current user
       await chatRef.set({
         'lastSeenAt': {
           currentUserId: FieldValue.serverTimestamp(),
@@ -84,40 +130,53 @@ class ChatController extends GetxController {
 
   Future<void> sendMessage() async {
     final text = messageController.text.trim();
-    if (text.isEmpty) return;
-
-    isSending.value = true;
+    if (text.isEmpty || isSending.value) return;
 
     try {
-      final now = FieldValue.serverTimestamp();
-      final chatRef = _firestore.collection('chats').doc(chatId);
-      final msgRef = chatRef.collection('messages').doc();
+      isSending.value = true;
 
-      await msgRef.set({
-        'senderId': currentUserId,
+      await _ensureChatDocument();
+
+      final currentUserData = await _getCurrentUserData();
+      final chatRef = _firestore.collection('chats').doc(chatId);
+
+      await chatRef.collection('messages').add({
         'text': text,
-        'createdAt': now,
-        'seen': false,
+        'senderId': currentUserId,
+        'receiverId': otherUserId,
+        'createdAt': FieldValue.serverTimestamp(),
+        'type': 'text',
       });
 
-      // Update chat metadata
-      await chatRef.set({
+      await chatRef.update({
+        'chatId': chatId,
+        'members': [currentUserId, otherUserId],
         'lastMessage': text,
-        'lastMessageAt': now,
+        'lastMessageAt': FieldValue.serverTimestamp(),
         'lastMessageSenderId': currentUserId,
-        'unreadCount': {
-          otherUserId: FieldValue.increment(1),
-        },
-        'lastSeenAt': {
-          currentUserId: now,
-        },
-      }, SetOptions(merge: true));
 
-      
+        'memberDetails.$currentUserId.name':
+        currentUserData['name'] ?? '',
+        'memberDetails.$currentUserId.profileImage':
+        currentUserData['profileImage'] ?? '',
+
+        'memberDetails.$otherUserId.name': otherUserName,
+        'memberDetails.$otherUserId.profileImage': otherUserImage,
+
+        'unreadCount.$currentUserId': 0,
+        'unreadCount.$otherUserId': FieldValue.increment(1),
+
+        'lastSeenAt.$currentUserId': FieldValue.serverTimestamp(),
+      });
+
       messageController.clear();
     } catch (e, st) {
-      AppLogger.e('Failed to send message', error: e, stackTrace: st);
-      Get.snackbar('Error', 'Failed to send message');
+      AppLogger.e('Message send failed', error: e, stackTrace: st);
+      Get.snackbar(
+        'Error',
+        'Message send failed',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isSending.value = false;
     }
@@ -125,6 +184,7 @@ class ChatController extends GetxController {
 
   @override
   void onClose() {
+    _messagesSubscription?.cancel();
     messageController.dispose();
     super.onClose();
   }

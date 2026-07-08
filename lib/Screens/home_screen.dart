@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 
 import '../Constants/app_colors.dart';
 import '../Controller/home_controller.dart';
+import '../Routes/app_routes.dart' show AppRoutes;
 
 class HomeScreen extends GetView<HomeController> {
   const HomeScreen({super.key});
@@ -146,7 +147,7 @@ class HomeScreen extends GetView<HomeController> {
                                     ListTile(
                                       leading: const Icon(Icons.settings),
                                       title: const Text('Settings'),
-                                      onTap: Get.back,
+                                      onTap:()=>Get.toNamed(AppRoutes.settings)
                                     ),
                                     ListTile(
                                       leading: const Icon(Icons.logout),

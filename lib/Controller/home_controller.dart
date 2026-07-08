@@ -40,7 +40,6 @@ class HomeController extends GetxController {
 
   void toggleSearch() {
     isSearching.value = !isSearching.value;
-
     if (!isSearching.value) {
       searchController.clear();
       searchText.value = '';
@@ -48,6 +47,10 @@ class HomeController extends GetxController {
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> recentChatsStream() {
+    if (currentUserId.isEmpty) {
+      return const Stream.empty();
+    }
+
     return _firestore
         .collection('chats')
         .where('members', arrayContains: currentUserId)
@@ -109,49 +112,43 @@ class HomeController extends GetxController {
     return ids.join('_');
   }
 
+
   Future<void> openChatWithUser(Map<String, dynamic> otherUser) async {
     try {
+
       final String otherUserId = otherUser['uid'];
       final String chatId = generateChatId(otherUserId);
 
       final currentUserDoc =
       await _firestore.collection('users').doc(currentUserId).get();
-
       final currentUserData = currentUserDoc.data() ?? {};
 
       final chatRef = _firestore.collection('chats').doc(chatId);
-      final chatDoc = await chatRef.get();
 
-      if (!chatDoc.exists) {
-        await chatRef.set({
-          'chatId': chatId,
-          'members': [currentUserId, otherUserId],
-          'memberDetails': {
-            currentUserId: {
-              'name': currentUserData['name'] ?? '',
-              'profileImage': currentUserData['profileImage'] ?? '',
-            },
-            otherUserId: {
-              'name': otherUser['name'] ?? '',
-              'profileImage': otherUser['profileImage'] ?? '',
-            },
+      await chatRef.set({
+        'chatId': chatId,
+        'members': [currentUserId, otherUserId],
+        'memberDetails': {
+          currentUserId: {
+            'name': currentUserData['name'] ?? '',
+            'profileImage': currentUserData['profileImage'] ?? '',
           },
-          'lastMessage': '',
-          'lastMessageAt': FieldValue.serverTimestamp(),
-          'lastMessageSenderId': '',
-          'unreadCount': {
-            currentUserId: 0,
-            otherUserId: 0,
+          otherUserId: {
+            'name': otherUser['name'] ?? 'User',
+            'profileImage': otherUser['profileImage'] ?? '',
           },
-          'lastSeenAt': {
-            currentUserId: FieldValue.serverTimestamp(),
-            otherUserId: null,
-          },
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-      }
+        },
+        'unreadCount': {
+          currentUserId: 0,
+          otherUserId: 0,
+        },
+        'lastSeenAt': {
+          currentUserId: FieldValue.serverTimestamp(),
+          otherUserId: null,
+        },
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
-      // ✅ Navigate to ChatScreen
       Get.toNamed(
         AppRoutes.chat,
         arguments: {
@@ -174,7 +171,6 @@ class HomeController extends GetxController {
       );
     }
   }
-
   Future<void> logout() async {
     try {
       await _auth.signOut();
@@ -185,6 +181,8 @@ class HomeController extends GetxController {
         'Logout failed',
         error: e,
         stackTrace: stackTrace,
+
+
       );
       Get.snackbar(
         'Logout Failed',
